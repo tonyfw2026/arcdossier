@@ -346,7 +346,13 @@ code {
   color: var(--ink-soft);
 }
 
-/* Contact link, kept in the sidebar footer area. */
+/* Contact links, kept together in the sidebar footer area. */
+.social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .social-link {
   display: flex;
   align-items: center;
@@ -381,6 +387,8 @@ code {
   font-size: 11px;
   font-weight: 700;
 }
+
+.social-mark svg { width: 13px; height: 13px; }
 
 .social-handle { flex: 1; }
 .social-arrow { color: var(--ink-soft); }
@@ -1669,7 +1677,7 @@ code {
   .brand { margin: 0; }
   .main-nav { flex-direction: row; }
   .nav-item { white-space: nowrap; }
-  .chain-panel, .sidebar-footer, .social-link { display: none; }
+  .chain-panel, .sidebar-footer, .social-links { display: none; }
   .main-content { margin-left: 0; padding: 22px 20px 60px; }
   .topbar { flex-direction: column; align-items: flex-start; }
   .hero-card, .search-panel, .result-card { padding: 22px; }
