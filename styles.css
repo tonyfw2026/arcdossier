@@ -3,7 +3,7 @@
    Palette, type pairing and corner radii are derived from the design tokens
    published on arc.io (protocol navy, validator blue, sky sync, static ether,
    the sky-to-sand hero wash; DM Sans + Space Grotesk + Space Mono; 8px radii).
-   The stylesheet itself is ours. Fonts are served locally from fonts/.
+   The stylesheet itself is ours. Fonts are bundled in fonts/.
 
    Self-contained: no external stylesheets, fonts or images are requested. */
 

@@ -1,5 +1,5 @@
 /* ArcDossier v0.3 — front-end.
-   Everything shown here comes from the local server: live Arc RPC reads and
+   Everything shown here comes from the ArcDossier service: live Arc RPC reads and
    server-side source probes. Nothing is seeded, and every claim can be opened
    up to the receipt behind it. */
 
@@ -130,7 +130,7 @@ async function api(path, options) {
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error("the local server returned non-JSON (HTTP " + response.status + ")");
+    throw new Error("the ArcDossier service returned non-JSON (HTTP " + response.status + ")");
   }
 }
 
@@ -220,11 +220,11 @@ async function checkHealth() {
     const payload = await api("/api/health");
     state.serverOk = Boolean(payload.ok);
     dot.className = "status-dot is-ok";
-    label.textContent = "local server online";
+    label.textContent = "ArcDossier online";
   } catch {
     state.serverOk = false;
     dot.className = "status-dot is-error";
-    label.textContent = "local server offline";
+    label.textContent = "ArcDossier unavailable";
   }
 }
 
@@ -265,10 +265,6 @@ function renderRecent() {
     row.addEventListener("click", () => runSearch(item.query, { count: false }));
     container.append(row);
   });
-
-  $("#activity-disclosure").textContent = recent.length
-    ? "Latest five screens from this browser. A shared cross-user activity store is on the roadmap."
-    : "Local history only. A shared cross-user activity store is on the roadmap.";
 }
 
 function recordSearch(dossier) {
@@ -903,7 +899,7 @@ async function runSearch(query, options) {
   } catch (error) {
     setSearchStatus(
       "Could not assemble a dossier: " + error.message +
-      ". The checks run in the local server — start it with python3 server.py if it is not running.",
+      ". The ArcDossier service could not complete the checks. Please try again shortly.",
       "error"
     );
     $("#search-result").innerHTML = `<div class="empty-state"><strong>No dossier assembled.</strong>

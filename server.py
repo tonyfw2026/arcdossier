@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ArcDossier v0.3 — local research server.
+"""ArcDossier v0.3 — Arc ecosystem research service.
 
 Stdlib only. Serves the static prototype and three real capabilities:
 
@@ -8,7 +8,8 @@ Stdlib only. Serves the static prototype and three real capabilities:
   * /api/dossier   — evidence assembly: RPC proof of Arc deployment on both
                      networks + live source probes + a transparent score
 
-Run:  python3 server.py [port]        (default 4180)
+Deployment reads PORT and ARCDOSSIER_HOST from the environment. A command-line
+port remains available for maintenance and testing.
 
 Endpoints can be overridden with ARC_RPC_MAINNET / ARC_RPC_TESTNET.
 """
@@ -30,8 +31,9 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 VERSION = "0.3"
-DEFAULT_PORT = 4180
-USER_AGENT = "ArcDossier/0.3 (local research prototype; +https://arc.io)"
+DEFAULT_PORT = int(os.environ.get("PORT", "8080"))
+DEFAULT_HOST = os.environ.get("ARCDOSSIER_HOST", "0.0.0.0")
+USER_AGENT = "ArcDossier/0.3 (+https://arcdossier.site)"
 DOCS_ROOT = "https://docs.arc.io"
 
 NETWORKS = {
@@ -66,7 +68,7 @@ STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def load_dotenv(path: str = None) -> int:
-    """Read KEY=VALUE lines from a local .env file into the environment.
+    """Read KEY=VALUE lines from a private .env file into the environment.
 
     Keeps the secret out of shell history and out of the source tree: the file is
     git-ignored, and anything already exported in the real environment wins.
@@ -108,7 +110,7 @@ STATIC_FILES = {
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
 }
 
-# Locally hosted webfonts. Redistribution is permitted under the SIL Open Font
+# Bundled webfonts. Redistribution is permitted under the SIL Open Font
 # License 1.1; the licence texts ship alongside the files in fonts/.
 FONT_DIR = "fonts"
 FONT_FILE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.(woff2|txt|json)$")
@@ -489,7 +491,7 @@ def probe_url(url: str, fresh: bool = False) -> dict:
         if cached:
             return cached
     if not _rate_ok():
-        return {"ok": False, "url": url, "error": "local probe rate limit reached, wait a moment"}
+        return {"ok": False, "url": url, "error": "probe rate limit reached, wait a moment"}
 
     record = {"url": url, "fetchedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     current = url
@@ -2690,7 +2692,7 @@ def build_dossier(raw_query: str, fresh: bool = False, profile: str = "deep") ->
                     "status": "not-arc",
                     "statusLabel": "Not in the Arc ecosystem",
                     "title": raw_query.strip(),
-                    "description": "This identifier matches a known non-Arc surface in the local catalog. ArcDossier stopped before assembling an Arc dossier.",
+                    "description": "This identifier matches a known non-Arc surface. ArcDossier stopped before assembling an Arc dossier.",
                     "sources": [],
                     "gaps": [],
                     "score": None,
@@ -3246,7 +3248,7 @@ def public_ai_status() -> dict:
     status = ai_status()
     return {
         "configured": status["configured"],
-        "localPreview": status["mock"],
+        "mockMode": status["mock"],
         "modes": [
             {"id": "quick", "label": "Research report",
              "detail": "A detailed report from a bounded evidence set, without deep reasoning."},
@@ -3277,8 +3279,7 @@ def load_reports() -> list:
 
 
 def append_report(record: dict) -> dict:
-    """Append to a local hash chain. This replaces anchoring hashes on-chain: an
-    append-only local log gives the same tamper-evidence without spending gas."""
+    """Append to the report hash chain without spending gas on every report."""
     os.makedirs(REPORT_DIR, exist_ok=True)
     previous = load_reports()
     record["prevHash"] = previous[-1]["hash"] if previous else None
@@ -3765,7 +3766,7 @@ def call_model(packet: dict, effort: str, shortened: bool = False, mode: str = "
 
 
 def mock_model(packet: dict, effort: str, shortened: bool = False) -> dict:
-    """Deterministic local preview built only from the evidence packet."""
+    """Deterministic evidence-only report built from the verified packet."""
     facts = packet.get("facts", [])
     by_type = {}
     for fact in facts:
@@ -3866,7 +3867,7 @@ def analyze(dossier: dict, effort: str = None, fresh: bool = False, mode: str = 
                     and report.get("model") == want_model
                     and report.get("status") == "ok"):
                 return {"status": "cached", "packet": packet, "report": report,
-                        "message": "Served from the local report log. The evidence is unchanged since this "
+                        "message": "Served from the report cache. The evidence is unchanged since this "
                                    "analysis was generated, so no model call was made."}
 
     status = ai_status()
@@ -3927,7 +3928,7 @@ def analyze(dossier: dict, effort: str = None, fresh: bool = False, mode: str = 
             "call": call_meta,
             "analysis": fallback_analysis,
             "validation": validate_analysis(fallback_analysis, packet),
-            "localFallback": True,
+            "evidenceFallback": True,
         }
 
     record = {
@@ -3944,7 +3945,7 @@ def analyze(dossier: dict, effort: str = None, fresh: bool = False, mode: str = 
         "usage": result["call"].get("usage") or {},
         "latencyMs": result["call"].get("latencyMs"),
         "shortenedRetry": bool(result["call"].get("shortenedRetry")),
-        "localFallback": bool(result.get("localFallback")),
+        "evidenceFallback": bool(result.get("evidenceFallback")),
         "packetHash": packet["packetHash"],
         "cacheKey": packet["cacheKey"],
         "factCount": len(packet["facts"]),
@@ -3954,8 +3955,8 @@ def analyze(dossier: dict, effort: str = None, fresh: bool = False, mode: str = 
     }
     stored = append_report(record)
     response = {"status": "ok", "packet": packet, "report": stored}
-    if record["localFallback"]:
-        response["message"] = ("The model response could not be used, so ArcDossier completed the report locally "
+    if record["evidenceFallback"]:
+        response["message"] = ("The model response could not be used, so ArcDossier completed an evidence-only report "
                                "from the verified evidence packet without making another model call.")
     return response
 
@@ -4046,7 +4047,7 @@ def build_report(query: str, fresh: bool = False, deadline_seconds: int = REPORT
                 report.update({
                     "narrativeStatus": "cached",
                     "narrative": prior.get("analysis") or {},
-                    "localPreview": bool(prior.get("mock")),
+                    "mockMode": bool(prior.get("mock")),
                     "packet": packet,
                     "validation": prior.get("validation") or {},
                     "timings": {"evidenceMs": evidence_ms, "totalMs": elapsed_ms(), "cached": True},
@@ -4094,7 +4095,7 @@ def build_report(query: str, fresh: bool = False, deadline_seconds: int = REPORT
     report.update({
         "narrativeStatus": "ok",
         "narrative": parsed,
-        "localPreview": bool(model_result.get("mock")),
+        "mockMode": bool(model_result.get("mock")),
         "packet": packet,
         "validation": validation,
         "timings": {"evidenceMs": evidence_ms, "modelMs": int((time.time() - call_started) * 1000),
@@ -4503,8 +4504,8 @@ def main():
         except ValueError:
             print("usage: python3 server.py [port]", file=sys.stderr)
             return 2
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print("ArcDossier v%s serving http://127.0.0.1:%d" % (VERSION, port))
+    server = ThreadingHTTPServer((DEFAULT_HOST, port), Handler)
+    print("ArcDossier v%s serving on %s:%d" % (VERSION, DEFAULT_HOST, port))
     for key in NETWORK_ORDER:
         print("  %-8s %s" % (NETWORKS[key]["label"], NETWORKS[key]["rpc"]))
     try:

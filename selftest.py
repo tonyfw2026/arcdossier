@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Self-test for ArcDossier. Run it against a live instance:
+"""Self-test for ArcDossier. Run it against a deployed instance:
 
-    python3 selftest.py            # assumes http://127.0.0.1:4188
-    python3 selftest.py 4180       # or another port
+    python3 selftest.py
+    python3 selftest.py https://arcdossier.site
 
 Every check prints PASS / FAIL / SKIP with the observed value, so a reviewer
 can see what was actually verified rather than trusting a summary. Checks that
@@ -161,12 +161,12 @@ def check_instance(base):
     code = health.get("code") or {}
     record("health reports a build fingerprint", bool(code.get("build")), code.get("build", ""))
 
-    local = {}
+    source_hashes = {}
     for name in ("server.py", "app.js", "styles.css", "index.html"):
         import hashlib
         blob = open(os.path.join(HERE, name), "rb").read()
-        local[name] = hashlib.sha256(blob).hexdigest()[:16]
-    drift = [name for name, digest in local.items() if (code.get("files") or {}).get(name, {}).get("sha256") != digest]
+        source_hashes[name] = hashlib.sha256(blob).hexdigest()[:16]
+    drift = [name for name, digest in source_hashes.items() if (code.get("files") or {}).get(name, {}).get("sha256") != digest]
     # Only server.py is loaded once; the static assets are re-read per request, so a
     # static edit is already live and must not be reported as a failing check.
     needs_restart = bool(code.get("restartRequired"))
@@ -222,7 +222,7 @@ def check_endpoints(base):
 
 def check_ssrf(base):
     print("\n6. Source-probe guardrails (SSRF)")
-    for target, label in (("http://127.0.0.1:4188/api/health", "loopback"),
+    for target, label in (("http://[::1]:1/api/health", "loopback"),
                           ("http://10.0.0.5/", "RFC1918"),
                           ("file:///etc/passwd", "non-http scheme")):
         status, payload = fetch(base, "/api/probe?url=" + urllib.parse.quote(target, safe=""), timeout=30)
@@ -349,8 +349,7 @@ def check_data_files():
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    port = args[0] if args else "4188"
-    base = "http://127.0.0.1:%s" % port
+    base = (args[0] if args else os.environ.get("ARCDOSSIER_BASE_URL", "https://arcdossier.site")).rstrip("/")
     print("ArcDossier self-test against %s" % base)
 
     check_sources()

@@ -1,24 +1,18 @@
-# ArcDossier v0.3 — local research server
+# ArcDossier v0.3 — Arc ecosystem research
 
 ArcDossier turns a project identifier into an evidence-backed dossier about the Arc
 ecosystem. It is deliberately narrow: one input, a documented ecosystem gate, live
 source probes, an on-chain Arc membership check, a transparent score, and a stated
 list of what it still cannot prove.
 
-The v0.2 prototype was static and served fake preview data. v0.3 replaced that with
-live systems — see "What changed" below.
+The v0.2 prototype was static. v0.3 replaced it with live systems — see "What
+changed" below.
 
-## Run locally
+## Website
 
-```bash
-python3 server.py            # serves http://127.0.0.1:4180
-python3 server.py 4200       # or pick a port
-```
+[arcdossier.site](https://arcdossier.site) is the public product entry point.
 
-`python3 -m http.server` no longer works: the checks run server-side, so the file
-server was replaced by `server.py` (standard library only, no dependencies).
-
-Deep link: `http://127.0.0.1:4180/?q=arc.network` renders that dossier on load.
+Deep link: `https://arcdossier.site/?q=arc.network` renders that dossier on load.
 
 ## Onchain receipt contract
 
@@ -45,7 +39,7 @@ repository.
   mainnet and Arc testnet separately**. Bytecode size, the block it was read at, and a
   SHA-256 of the returned code are recorded. An empty result is reported as a finding,
   not smoothed over.
-- **Live source probes.** Every source on the dossier is fetched by the local server,
+- **Live source probes.** Every source on the dossier is fetched by the ArcDossier service,
   which records HTTP status, final URL after redirects, content type, byte count, page
   title, description, the SHA-256 of the body, and the timestamp.
 - **Link discovery, not URL guessing.** Documentation and repository links are probed
@@ -235,7 +229,7 @@ panel always states which window you actually got.
 | `GET /api/contract?address=` | `eth_getCode` + ERC-20 metadata on both networks |
 | `GET /api/token?address=` | Deterministic token metrics: identity, structure probes, activity window, risk signals |
 | `GET /api/ai/status` | Whether the AI layer is configured, which model and endpoint, daily budget usage. Never returns the key |
-| `GET /api/analyze?q=&mode=quick` | Build the evidence packet and run the single public report; served from the local report log when the evidence is unchanged |
+| `GET /api/analyze?q=&mode=quick` | Build the evidence packet and run the single public report; served from the report cache when the evidence is unchanged |
 | `GET /api/report` | Removed deep-report endpoint; returns HTTP 410 without calling a model |
 | `GET /api/ai/status` | Modes and budget only. Add `?admin=1` to see the model and provider |
 | `GET/POST /api/dossier?q=` | Full dossier for a website, X handle, or contract |
@@ -277,12 +271,12 @@ reasoning only. Three mechanisms keep that boundary from eroding:
 | Explicit thinking effort | Not sent by the public report path |
 | Daily call cap | `ARC_AI_DAILY_CALLS` (default 50); over budget, cached analyses keep serving |
 | Content-hash cache | Identical evidence is never analysed twice |
-| One-call ceiling | No automatic retry; an unusable response falls back to a local evidence-only report and is cached |
+| One-call ceiling | No automatic retry; an unusable response falls back to an evidence-only report and is cached |
 | Input budget | The packet is truncated to a fixed character budget rather than filling the 1M-token window |
 
-**Provenance and the local hash chain.** Each stored report records the model, protocol,
+**Provenance and the report hash chain.** Each stored report records the model, protocol,
 effort, token usage, latency, packet hash, cache key, and its own hash plus the previous
-report's hash. That gives tamper-evident history locally, with no gas spent. Anchoring
+report's hash. That gives tamper-evident history without spending gas. Anchoring
 report hashes on Arc is deliberately **not** implemented: it costs USDC per write, and
 it would only prove that a document existed at a time, not that it was true.
 
@@ -295,7 +289,7 @@ tolerance is visible rather than hidden.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `ARC_AI_PROVIDER` | `minimax` | `mock` exercises the pipeline locally with no quota spent; mock output is labelled as such |
+| `ARC_AI_PROVIDER` | `minimax` | `mock` exercises the pipeline without spending quota; mock output is labelled as such |
 | `MINIMAX_API_KEY` | — | Or `ARC_AI_API_KEY`. Subscription and pay-as-you-go keys both work |
 | `ARC_AI_BASE_URL` | `https://api.minimax.cn/anthropic` | |
 | `ARC_AI_PROTOCOL` | `anthropic` | The documented recommended route; `openai` uses `/chat/completions` |
@@ -350,14 +344,9 @@ Two traps this code handles explicitly:
 
 ## Security posture
 
-- The server binds `127.0.0.1` only.
 - Probe targets are resolved first and refused if they are loopback, RFC1918,
   link-local, reserved, multicast or unspecified (basic SSRF protection). Redirects are
   re-checked at every hop.
-- **`198.18.0.0/15` is allow-listed** on purpose: this machine's DNS resolves public
-  hosts through a transparent proxy in that IANA benchmarking range, which Python's
-  `ipaddress` module classifies as private. Without the override every probe would be
-  rejected. Remove `ALLOW_PROXY_RANGE` on a host without that proxy.
 - All fetched text is escaped before it reaches the DOM, since page titles and
   descriptions are untrusted third-party content.
 
@@ -367,18 +356,14 @@ Two traps this code handles explicitly:
 |---|---|
 | `server.py` | Stdlib HTTP server, Arc RPC client, probe engine, scoring |
 | `index.html` | Views: Overview, Search, Roadmap |
-| `styles.css` | Self-contained stylesheet, local `@font-face` rules |
-| `app.js` | Fetches the API, renders receipts, keeps browser-local history |
+| `styles.css` | Self-contained stylesheet and bundled `@font-face` rules |
+| `app.js` | Fetches the API, renders receipts and manages recent searches |
 | `fonts/` | Self-hosted DM Sans / Space Grotesk / Space Mono + OFL licences |
 | `.env.example` | Server environment template; the real `.env` is git-ignored |
 | `reports/` | Runtime analysis log (append-only hash chain), git-ignored |
 | `shots/` | Headless-Chrome renders used to verify the UI |
 
-Session counters start from a 100-screen preview baseline and add real activity on top; the
-panel states this in the interface rather than presenting the baseline as measured traffic.
-
-Search history lives in `localStorage` and is browser-local only. There is no shared
-activity store, no wallet, no private key, no custody, and no paid placement.
+There is no wallet, private key, custody or paid placement in the product flow.
 
 ## Provenance
 
