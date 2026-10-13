@@ -28,10 +28,13 @@ Build and test with Arc Foundry:
 arc-forge test --network arc
 ```
 
-Deploy to Arc Testnet first, then repeat against Arc Mainnet only after the testnet
-address and one sample receipt have been verified. Deployment addresses and transaction
+ArcDossierRegistry is deployed on Arc Mainnet. Deployment addresses and transaction
 hashes are recorded under `contracts/deployments/`; private keys never belong in this
-repository.
+repository. No report receipt has been anchored yet.
+
+| Network | Contract | Deployment transaction |
+|---|---|---|
+| Arc Mainnet (5042) | [`0xFB7b…4336`](https://explorer.arc.io/address/0xFB7b800F5EE5bA8a38CEF7407897F5F3a2A14336) | [`0x9925…c0bc`](https://explorer.arc.io/tx/0x9925c860275a400e570d41276b129b3d9ec955c8e23622d268353464976ec0bc) |
 
 ## What is real
 

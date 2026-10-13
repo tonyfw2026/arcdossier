@@ -1,0 +1,17 @@
+{
+  "network": "Arc Mainnet",
+  "chainId": 5042,
+  "contract": "ArcDossierRegistry",
+  "contractAddress": "0xFB7b800F5EE5bA8a38CEF7407897F5F3a2A14336",
+  "transactionHash": "0x9925c860275a400e570d41276b129b3d9ec955c8e23622d268353464976ec0bc",
+  "deployer": "0xf7f25B89Bd0Ab1E95DB784f2d98247F7dFF7f98c",
+  "publisher": "0xf7f25B89Bd0Ab1E95DB784f2d98247F7dFF7f98c",
+  "blockNumber": 25779043,
+  "deployedAt": "2026-10-14T00:20:22+08:00",
+  "compiler": "solc 0.8.24",
+  "gasUsed": 349344,
+  "effectiveGasPriceWei": "20000001152",
+  "deploymentCostUsdc": "0.006986880402444288",
+  "sourceCommit": "3be403bff425208d348f6ce419d757d850899128",
+  "reportReceiptAnchored": false
+}
