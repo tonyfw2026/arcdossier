@@ -31,6 +31,7 @@ arc-forge test --network arc
 ArcDossierRegistry is deployed on Arc Mainnet. Deployment addresses and transaction
 hashes are recorded under `contracts/deployments/`; private keys never belong in this
 repository. No report receipt has been anchored yet.
+The deployed bytecode has an [exact-match source verification on Sourcify](https://sourcify.dev/server/v2/verify/0bafc9f3-cef7-43b3-bafc-7d9f84d7418b).
 
 | Network | Contract | Deployment transaction |
 |---|---|---|

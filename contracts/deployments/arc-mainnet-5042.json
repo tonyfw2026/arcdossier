@@ -13,5 +13,11 @@
   "effectiveGasPriceWei": "20000001152",
   "deploymentCostUsdc": "0.006986880402444288",
   "sourceCommit": "3be403bff425208d348f6ce419d757d850899128",
+  "sourceVerification": {
+    "provider": "Sourcify",
+    "status": "exact_match",
+    "jobId": "0bafc9f3-cef7-43b3-bafc-7d9f84d7418b",
+    "url": "https://sourcify.dev/server/v2/verify/0bafc9f3-cef7-43b3-bafc-7d9f84d7418b"
+  },
   "reportReceiptAnchored": false
 }
