@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Screen Arc ecosystem projects on evidence: live chain reads, source receipts, and a fundamentals score you can audit line by line." />
+    <title>ArcDossier — screen Arc projects before you trade them</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23151918'/%3E%3Cpath d='M18 32 32 18l14 14-14 14z' fill='none' stroke='%23ff6b4a' stroke-width='5'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#" data-view-link="dashboard" aria-label="ArcDossier home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i></span><span>ArcDossier</span>
+        </a>
+
+        <nav class="main-nav">
+          <button class="nav-item is-active" data-view-link="dashboard"><span class="nav-icon grid-icon" aria-hidden="true"></span>Overview</button>
+          <button class="nav-item" data-view-link="search"><span class="nav-icon file-icon" aria-hidden="true"></span>Screen<span class="nav-count" id="search-total-nav">0</span></button>
+          <button class="nav-item" data-view-link="roadmap"><span class="nav-icon route-icon" aria-hidden="true"></span>Roadmap</button>
+        </nav>
+
+        <div class="chain-panel" aria-live="polite">
+          <span class="eyebrow">ARC NETWORKS · LIVE</span>
+          <div class="chain-rows" id="chain-rows">
+            <p class="chain-loading">reading Arc mainnet and testnet…</p>
+          </div>
+          <p class="chain-note">Head blocks read directly from each Arc RPC endpoint. Verified against the expected chain ID on every refresh.</p>
+        </div>
+
+        <a class="social-link" href="https://x.com/ArcDossier" target="_blank" rel="noopener noreferrer">
+          <span class="social-mark" aria-hidden="true">X</span>
+          <span class="social-handle">@ArcDossier</span>
+          <span class="social-arrow" aria-hidden="true">↗</span>
+        </a>
+
+        <div class="sidebar-footer"><span class="status-dot" id="status-dot"></span><span id="status-text">connecting</span><span class="version">v0.3</span></div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div><p class="topbar-kicker">ARC ECOSYSTEM SCREENING</p><h1 id="page-title">Arc projects, scored on evidence.</h1></div>
+          <div class="topbar-actions">
+            <span class="mode-chip" id="chain-chip"><span class="pulse"></span> <span id="chip-text">Arc testnet</span></span>
+            <button class="button button-dark" data-view-link="search"><span aria-hidden="true">⌕</span> Screen a project</button>
+          </div>
+        </header>
+
+        <section class="view is-active" data-view="dashboard">
+          <section class="hero-card">
+            <div class="hero-copy">
+              <span class="eyebrow">EVIDENCE BEFORE POSITION</span>
+              <h2>Screen an Arc project. Get the dossier, not the pitch.</h2>
+              <p>Paste an official website, X profile, or contract address. Every published source is fetched live, Arc membership is proven on-chain, and the score breaks down check by check — so a candidate has to earn your attention instead of asking for it.</p>
+              <div class="hero-actions">
+                <button class="button button-primary" data-view-link="search">Screen a project</button>
+                <button class="text-button" id="load-example">Run a live example: arc.io <span>↗</span></button>
+              </div>
+            </div>
+            <div class="hero-visual" aria-label="Live chain readout">
+              <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+              <div class="signal-card signal-main">
+                <span class="signal-label">ARC MAINNET HEAD</span>
+                <strong id="hero-block">—</strong>
+                <small id="hero-block-note">reading chains…</small>
+              </div>
+              <div class="signal-card signal-source"><span class="source-icon">⌁</span><div><strong id="hero-proofs">0</strong><small>deployments proven</small></div></div>
+              <div class="signal-node node-a"></div><div class="signal-node node-b"></div><div class="signal-node node-c"></div>
+            </div>
+          </section>
+
+          <section class="section-block">
+            <div class="section-head"><div><span class="eyebrow">THIS SESSION</span><h2>What the checks returned</h2></div><p>Counts start from a 100-screen preview baseline and add your own activity. Checks that this server actually ran are counted separately.</p></div>
+            <div class="metric-grid">
+              <article class="metric-card"><span class="metric-label">Projects screened</span><strong id="metric-searches">0</strong><small>this browser</small></article>
+              <article class="metric-card"><span class="metric-label">Live sources fetched</span><strong id="metric-probes">0</strong><small>server-side reads</small></article>
+              <article class="metric-card metric-accent"><span class="metric-label">Arc deployments proven</span><strong id="metric-proofs">0</strong><small>bytecode found via RPC</small></article>
+              <article class="metric-card metric-muted"><span class="metric-label">Unproven claims stopped</span><strong id="metric-stopped">0</strong><small>no score issued</small></article>
+            </div>
+          </section>
+
+          <section class="section-block">
+            <div class="section-head"><div><span class="eyebrow">THE SCREENING PIPELINE</span><h2>Four checks per screen</h2></div><p>Each step either produces evidence or records a gap. Nothing is inferred.</p></div>
+            <ol class="pipeline-list">
+              <li><span class="step-num">01</span><div><strong>Classify</strong><p>Contract address, official domain, or X handle. Documented non-Arc surfaces stop here.</p></div></li>
+              <li><span class="step-num">02</span><div><strong>Probe</strong><p>The server fetches each published source and keeps the HTTP status, byte count, title, and SHA-256 of what came back.</p></div></li>
+              <li><span class="step-num">03</span><div><strong>Prove on Arc</strong><p>Contract addresses are read with <code>eth_getCode</code> against the Arc RPC. Bytecode is proof; an empty result is a finding, not a guess.</p></div></li>
+              <li><span class="step-num">04</span><div><strong>Score or refuse</strong><p>A score is issued only once Arc membership is proven. Otherwise the dossier shows the zeroed breakdown and the open questions.</p></div></li>
+            </ol>
+          </section>
+
+          <section class="section-block">
+            <div class="section-head"><div><span class="eyebrow">BROWSER-LOCAL HISTORY</span><h2>Recently screened</h2></div><p id="activity-disclosure">Local history only. A shared cross-user activity store is on the roadmap.</p></div>
+            <div class="recent-list" id="recent-list"></div>
+          </section>
+        </section>
+
+        <section class="view" data-view="search">
+          <section class="search-panel">
+            <div class="section-head"><div><span class="eyebrow">SCREENING INTAKE</span><h2>Screen an Arc project</h2></div></div>
+            <form class="search-form" id="search-form" autocomplete="off">
+              <label class="field-label" for="project-query">Official website, X profile, or Arc contract address</label>
+              <div class="search-row">
+                <input id="project-query" name="query" type="text" placeholder="arc.io · x.com/arc · 0x…" spellcheck="false" />
+              </div>
+              <div class="mode-row">
+                <button class="button button-primary" type="submit" name="mode" value="quick">
+                  <span class="mode-title">Generate research report</span>
+                  <span class="mode-sub">Detailed answer · lower usage</span>
+                </button>
+              </div>
+              <div class="example-row">
+                <span>Live examples:</span>
+                <button type="button" class="chip" data-example-query="arc.io">arc.io</button>
+                <button type="button" class="chip" data-example-query="x.com/arc">x.com/arc</button>
+                <button type="button" class="chip" data-example-query="0x3600000000000000000000000000000000000000">USDC contract on Arc</button>
+              </div>
+            </form>
+            <div class="search-status" id="search-status" hidden></div>
+          </section>
+
+          <section class="search-result" id="search-result">
+            <div class="empty-state">
+              <strong>Nothing screened yet.</strong>
+              <p>Screen a project to fetch its published sources and read the Arc chain. Every result arrives with the receipts behind it.</p>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" data-view="roadmap">
+          <section class="section-block">
+            <div class="section-head"><div><span class="eyebrow">SHIPPED IN v0.3</span><h2>What is real today</h2></div><p>Wired to live systems, not mocks.</p></div>
+            <ul class="roadmap-list is-done">
+              <li><strong>Mainnet and testnet, checked separately</strong><p>Contract addresses are read with <code>eth_getCode</code> on Arc mainnet and Arc testnet, and the difference is stated rather than averaged away.</p></li>
+              <li><strong>Deterministic metrics a trader can act on</strong><p>Supply, proxy and owner structure, pausability, and a bounded activity window — counts of transfers, addresses, mints and burns, all read from the chain.</p></li>
+              <li><strong>Risk signals with their evidence attached</strong><p>Upgradeable logic, owner roles, separate admins, minting observed in the window. Each signal names the check that produced it.</p></li>
+              <li><strong>A score you can audit line by line</strong><p>Every point maps to a check that either passed or failed, and an unproven project gets no score at all.</p></li>
+            </ul>
+          </section>
+
+          <section class="section-block">
+            <div class="section-head"><div><span class="eyebrow">NEXT</span><h2>Where ArcDossier goes next</h2></div><p>Ordered by what a screening workflow needs most.</p></div>
+            <ol class="roadmap-list">
+              <li><span class="step-num">01</span><div><strong>Screening filters and saved lists</strong><p>Sort and filter by score, by proven deployment, and by risk signal — work a shortlist instead of one project at a time.</p></div></li>
+              <li><span class="step-num">02</span><div><strong>Evidence-change alerts</strong><p>Get told when a screened project's sources, contract structure or activity change, instead of re-checking by hand.</p></div></li>
+              <li><span class="step-num">03</span><div><strong>Ownership, not just presence</strong><p>Require a project's X account and domain to cross-link before a social profile counts as evidence.</p></div></li>
+              <li><span class="step-num">04</span><div><strong>Ranking that shows its inputs</strong><p>Ecosystem ranking built from measured screens and proven deployments, with the inputs published.</p></div></li>
+              <li><span class="step-num">05</span><div><strong>Non-custodial execution</strong><p>Wallet-confirmed routes only. No keys, no custody, and no paid placement anywhere inside a dossier.</p></div></li>
+              <li><span class="step-num">06</span><div><strong>Funding and team data sources</strong><p>Those two dimensions are currently marked unmeasured rather than scored. Wiring a real source is what would let them count.</p></div></li>
+            </ol>
+          </section>
+
+          <section class="section-block">
+            <div class="section-head"><div><span class="eyebrow">EXPLICIT LIMITS</span><h2>What this does not do</h2></div></div>
+            <ul class="limits-list">
+              <li><strong>It does not tell you what to buy or sell.</strong> The score ranks how well a project's evidence holds up, not expected return. No output here is a trade recommendation, and the AI layer is structurally forbidden from producing one.</li>
+              <li>It does not confirm that a live website belongs to the team behind a contract. RPC proves deployment, not ownership.</li>
+              <li>It does not audit code, tokenomics, or intent. A deployed contract is not a good project.</li>
+              <li>It does not hold keys or funds, and it does not accept payment for placement.</li>
+              <li>Testnet deployments are labelled as testnet. A testnet contract is cheap to deploy and does not prove a project is live on Arc mainnet.</li>
+            </ul>
+          </section>
+        </section>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

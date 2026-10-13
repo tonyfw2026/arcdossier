@@ -1,0 +1,7 @@
+{
+  "name": "arcdossier-local-preview",
+  "private": true,
+  "scripts": {
+    "dev": "python3 server.py 4217"
+  }
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "family": "DM Sans",
+    "weight": 400,
+    "file": "dmsans-400.woff2",
+    "bytes": 14124
+  },
+  {
+    "family": "DM Sans",
+    "weight": 500,
+    "file": "dmsans-500.woff2",
+    "bytes": 14288
+  },
+  {
+    "family": "DM Sans",
+    "weight": 700,
+    "file": "dmsans-700.woff2",
+    "bytes": 14256
+  },
+  {
+    "family": "Space Grotesk",
+    "weight": 500,
+    "file": "spacegrotesk-500.woff2",
+    "bytes": 13372
+  },
+  {
+    "family": "Space Grotesk",
+    "weight": 700,
+    "file": "spacegrotesk-700.woff2",
+    "bytes": 12848
+  },
+  {
+    "family": "Space Mono",
+    "weight": 400,
+    "file": "spacemono-400.woff2",
+    "bytes": 9464
+  },
+  {
+    "family": "Space Mono",
+    "weight": 700,
+    "file": "spacemono-700.woff2",
+    "bytes": 9552
+  }
+]

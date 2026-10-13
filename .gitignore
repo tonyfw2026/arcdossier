@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+reports/
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+.tools/
+contracts/out/
+contracts/cache/
+broadcast/
