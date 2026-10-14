@@ -1,12 +1,12 @@
-# ArcDossier v0.3 — Arc ecosystem research
+# ArcDossier v0.5 — Arc ecosystem research
 
 ArcDossier turns a project identifier into an evidence-backed dossier about the Arc
 ecosystem. It is deliberately narrow: one input, a documented ecosystem gate, live
 source probes, an on-chain Arc membership check, a transparent score, and a stated
 list of what it still cannot prove.
 
-The v0.2 prototype was static. v0.3 replaced it with live systems — see "What
-changed" below.
+v0.5 adds a local Arc project knowledge base, unified identity lookup, and live
+token-market data while preserving the existing evidence pipeline for unknown projects.
 
 ## Website
 
@@ -59,6 +59,23 @@ The deployed bytecode has an [exact-match source verification on Sourcify](https
   with the returned chain ID verified against the expected one on every refresh.
 
 ## Research report
+
+Known Arc projects are resolved locally before any model request. A search by Arc
+contract, exact project name or symbol, official domain, or recorded X handle returns
+the saved seven-module research profile immediately. Ambiguous symbols return candidates
+instead of silently choosing one project. Market data is fetched separately by contract,
+cached for five minutes, and never overwrites the saved research.
+
+The bundled v0.5 package currently contains 28 research entities, 27 Arc token contracts,
+and 52 cited sources. Import it idempotently with:
+
+```bash
+python3 import_research_package.py
+```
+
+The SQLite file under `data/` is runtime state and is intentionally git-ignored. If a
+market provider is unavailable, the last valid snapshot remains visible as stale rather
+than being replaced with empty values.
 
 The interface has one report path. It gathers a bounded evidence set, then uses
 `MiniMax-M2.7-highspeed` without an explicit reasoning-effort field to write a detailed,
@@ -228,6 +245,9 @@ panel always states which window you actually got.
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/health` | Liveness and version |
+| `GET /api/knowledge/stats` | Imported project, token, source, and snapshot counts |
+| `GET /api/knowledge?q=` | Resolve a CA, domain, X handle, name, or symbol locally |
+| `GET /api/market?project_id=&fresh=1` | Live or cached market data for a resolved project |
 | `GET /api/chain` | Both networks: chainId, head block, latency, client version |
 | `GET /api/probe?url=` | Fetch one source, return its receipt |
 | `GET /api/contract?address=` | `eth_getCode` + ERC-20 metadata on both networks |

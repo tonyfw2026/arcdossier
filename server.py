@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""ArcDossier v0.3 — Arc ecosystem research service.
+"""ArcDossier v0.5 — Arc ecosystem research service.
 
-Stdlib only. Serves the static prototype and three real capabilities:
+Stdlib only. Serves the static product and its evidence-first research APIs.
 
   * /api/chain     — live Arc RPC snapshot for Arc mainnet and Arc testnet
   * /api/probe     — server-side fetch of a source page, with a content receipt
@@ -30,10 +30,12 @@ import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-VERSION = "0.3"
+from knowledge_base import KnowledgeBase
+
+VERSION = "0.5"
 DEFAULT_PORT = int(os.environ.get("PORT", "8080"))
 DEFAULT_HOST = os.environ.get("ARCDOSSIER_HOST", "0.0.0.0")
-USER_AGENT = "ArcDossier/0.3 (+https://arcdossier.site)"
+USER_AGENT = "ArcDossier/0.5 (+https://arcdossier.site)"
 DOCS_ROOT = "https://docs.arc.io"
 
 NETWORKS = {
@@ -65,6 +67,9 @@ TOKEN_CACHE_TTL = 900
 CHAIN_CACHE_TTL = 15
 PROBE_RATE_LIMIT = 40          # probes per minute, per process
 STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
+KNOWLEDGE_DIR = os.path.join(STATIC_DIR, "data", "research_package")
+KNOWLEDGE_DB = os.environ.get("ARCDOSSIER_DB", os.path.join(STATIC_DIR, "data", "arcdossier.sqlite3"))
+KNOWLEDGE = KnowledgeBase(KNOWLEDGE_DB, package_dir=KNOWLEDGE_DIR)
 
 
 def load_dotenv(path: str = None) -> int:
@@ -4341,7 +4346,22 @@ class Handler(BaseHTTPRequestHandler):
                     "rootdata": bool(ROOTDATA_API_KEY),
                 },
                 "dotenvEntriesLoaded": DOTENV_LOADED,
+                "knowledgeBase": KNOWLEDGE.stats(),
             })
+        elif path == "/api/knowledge/stats":
+            self._json({"ok": True, "data": KNOWLEDGE.stats()})
+        elif path == "/api/knowledge":
+            query = params.get("q", [""])[0].strip()
+            if not query:
+                self._json({"ok": False, "error": "pass ?q="}, 400)
+                return
+            self._json({"ok": True, "data": KNOWLEDGE.resolve(query)})
+        elif path == "/api/market":
+            project_id = params.get("project_id", [""])[0].strip()
+            if not project_id:
+                self._json({"ok": False, "error": "pass ?project_id="}, 400)
+                return
+            self._json({"ok": True, "data": KNOWLEDGE.market(project_id, fresh=fresh)})
         elif path == "/api/chain":
             self._json({"ok": True, "data": chain_snapshot(fresh=fresh)})
         elif path == "/api/probe":
@@ -4440,7 +4460,7 @@ def _hash_sources() -> dict:
     on restart, so a long-running process can lag the files with no visible sign.
     """
     files, digest = {}, hashlib.sha256()
-    for name in ("server.py", "app.js", "styles.css", "index.html"):
+    for name in ("server.py", "knowledge_base.py", "app.js", "styles.css", "index.html"):
         path = os.path.join(STATIC_DIR, name)
         try:
             with open(path, "rb") as handle:
@@ -4471,8 +4491,8 @@ def code_fingerprint() -> dict:
     disk = _hash_sources()
     changed = sorted(name for name, meta in disk["files"].items()
                      if (STARTUP_SOURCES["files"].get(name) or {}).get("sha256") != meta["sha256"])
-    needs_restart = "server.py" in changed
-    static_only = [name for name in changed if name != "server.py"]
+    needs_restart = any(name in changed for name in ("server.py", "knowledge_base.py"))
+    static_only = [name for name in changed if name not in ("server.py", "knowledge_base.py")]
     if needs_restart:
         verdict = "server.py changed after startup — restart required to pick it up"
     elif static_only:

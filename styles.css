@@ -1954,6 +1954,142 @@ code {
 
 .provider-card.is-unmatched { border-style: dashed; background: var(--panel-2); }
 
+/* ---------------------------------------------------- knowledge base -- */
+
+.result-heading h3 small {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.knowledge-speed {
+  min-width: 94px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--sky-wash);
+  text-align: center;
+}
+
+.knowledge-speed strong,
+.knowledge-speed span { display: block; }
+.knowledge-speed strong { font-family: var(--font-display); font-size: 20px; }
+.knowledge-speed span { margin-top: 3px; font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; color: var(--ink-soft); }
+
+.knowledge-section {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.knowledge-identity {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.knowledge-identity > span {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+
+.knowledge-identity small,
+.knowledge-identity strong,
+.knowledge-identity code { display: block; }
+.knowledge-identity small { margin-bottom: 8px; font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; color: var(--ink-soft); }
+.knowledge-identity strong { font-size: 13px; }
+.knowledge-identity code { overflow-wrap: anywhere; font-size: 10px; }
+.knowledge-links a { display: block; margin: 4px 0; color: var(--blue); font-size: 12px; text-decoration: none; }
+.knowledge-links a:hover { text-decoration: underline; }
+
+.market-loading,
+.market-empty {
+  margin: 12px 0 0;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.market-status {
+  margin-left: auto;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--sky-wash);
+  color: var(--blue);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.market-status.is-stale,
+.market-status.is-unavailable { background: var(--sand-soft); color: var(--amber-text); }
+
+.market-pair {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 11px;
+}
+.market-pair code { overflow-wrap: anywhere; }
+.market-pair a { color: var(--blue); white-space: nowrap; text-decoration: none; }
+
+.knowledge-modules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.knowledge-modules article {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+.knowledge-modules span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--blue); }
+.knowledge-modules p { margin: 9px 0 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
+
+.knowledge-risks { margin: 12px 0 0; padding-left: 18px; color: var(--ink-soft); font-size: 13px; }
+.knowledge-risks li { margin: 6px 0; }
+
+.knowledge-sources { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+.knowledge-sources summary { cursor: pointer; font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); }
+.knowledge-sources div { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.knowledge-sources a { color: var(--blue); font-size: 11px; text-decoration: none; }
+
+.knowledge-candidates { display: grid; gap: 8px; margin-top: 20px; }
+.knowledge-candidate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.knowledge-candidate:hover { border-color: var(--blue); }
+.knowledge-candidate strong,
+.knowledge-candidate small { display: block; }
+.knowledge-candidate small { margin-top: 3px; color: var(--ink-soft); }
+.knowledge-candidate code { font-size: 10px; overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .knowledge-identity,
+  .knowledge-modules { grid-template-columns: 1fr; }
+  .knowledge-candidate { align-items: flex-start; flex-direction: column; }
+  .market-pair { align-items: flex-start; flex-direction: column; }
+}
+
 /* ------------------------------------------------------------ report -- */
 
 .report-panel { margin-top: 8px; }

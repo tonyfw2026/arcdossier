@@ -65,7 +65,7 @@ def fetch(base, path, method="GET", body=None, timeout=120, raw=False):
 
 def check_sources():
     print("\n1. Source files")
-    for name in ("server.py", "app.js", "styles.css", "index.html"):
+    for name in ("server.py", "knowledge_base.py", "app.js", "styles.css", "index.html"):
         path = os.path.join(HERE, name)
         ok = os.path.exists(path)
         record("%s exists" % name, ok, "%d bytes" % os.path.getsize(path) if ok else "missing")
@@ -145,7 +145,7 @@ def check_frontend_hygiene():
     record("no duplicate top-level function definitions", not duplicates, ", ".join(duplicates) or "none")
 
     ids_used = set(re.findall(r'\$\("#([A-Za-z0-9_-]+)"\)', raw_app))
-    ids_dynamic = {"ai-body", "ai-effort", "ai-run", "recheck"}
+    ids_dynamic = {"ai-body", "ai-effort", "ai-run", "knowledge-market", "recheck"}
     ids_html = set(re.findall(r'id="([^"]+)"', html))
     missing = sorted(ids_used - ids_html - ids_dynamic)
     record("every static element id exists in index.html", not missing, ", ".join(missing) or "none missing")
@@ -162,7 +162,7 @@ def check_instance(base):
     record("health reports a build fingerprint", bool(code.get("build")), code.get("build", ""))
 
     source_hashes = {}
-    for name in ("server.py", "app.js", "styles.css", "index.html"):
+    for name in ("server.py", "knowledge_base.py", "app.js", "styles.css", "index.html"):
         import hashlib
         blob = open(os.path.join(HERE, name), "rb").read()
         source_hashes[name] = hashlib.sha256(blob).hexdigest()[:16]
@@ -173,7 +173,7 @@ def check_instance(base):
     record("no restart pending (server.py matches the process)", not needs_restart,
            "server.py changed after startup — restart it" if needs_restart
            else ("static assets changed and are already live: " + ", ".join(code.get("staticChanged") or [])
-                 if drift else "all four match"))
+                 if drift else "all tracked files match"))
 
     keys = health.get("keysLoaded") or {}
     record("health reports which keys are loaded", "minimax" in keys, json.dumps(keys))
@@ -204,6 +204,18 @@ def check_endpoints(base):
     record("GET /api/contract rejects a bad address", status == 400, "http %s" % status)
     status, missing = fetch(base, "/api/dossier", timeout=20)
     record("GET /api/dossier requires a query", status == 400, "http %s" % status)
+    status, stats = fetch(base, "/api/knowledge/stats", timeout=20)
+    knowledge = stats.get("data") or {}
+    record("knowledge package imported", status == 200 and knowledge.get("projects") == 28,
+           "%s projects / %s tokens" % (knowledge.get("projects"), knowledge.get("tokens")))
+    status, identity = fetch(base, "/api/knowledge?q=" + urllib.parse.quote("argus.world"), timeout=20)
+    match = (identity.get("data") or {}).get("match") or {}
+    record("website identity resolves from local database", match.get("projectId") == "arc-03",
+           "%s in %sms" % (match.get("name"), (identity.get("data") or {}).get("latencyMs")))
+    status, duplicate = fetch(base, "/api/knowledge?q=DUKE", timeout=20)
+    candidates = (duplicate.get("data") or {}).get("candidates") or []
+    record("duplicate symbols remain separate candidates", len(candidates) == 2,
+           "%d candidates" % len(candidates))
     status, removed = fetch(base, "/api/report?q=arc.io", timeout=20)
     record("legacy deep report is disabled", status == 410, "http %s" % status)
     status, unknown = fetch(base, "/api/nope", timeout=20)
@@ -299,14 +311,17 @@ def check_rendered_page(base):
         proc = subprocess.run(
             [chrome, "--headless", "--disable-gpu", "--no-sandbox", "--disable-crash-reporter",
              "--no-first-run", "--user-data-dir=" + profile, "--virtual-time-budget=90000",
-             "--dump-dom", base + "/?q=arc.io"],
+             "--dump-dom", base + "/?q=argus.world"],
             capture_output=True, text=True, timeout=180)
         dom = proc.stdout
+        if proc.returncode and not dom:
+            record("headless browser invocation", None, (proc.stderr or "Chrome could not start")[:100])
+            return
         record("page returns a DOM", len(dom) > 5000, "%d bytes" % len(dom))
-        record("result card rendered", "result-card" in dom, "found" if "result-card" in dom else "absent")
+        record("knowledge result rendered", "knowledge-result" in dom, "found" if "knowledge-result" in dom else "absent")
         record("no client-side error banner", "scripting error" not in dom.lower(),
                "clean" if "scripting error" not in dom.lower() else "the page reported a scripting error")
-        record("scorecard rendered", "scorecard-panel" in dom, "found" if "scorecard-panel" in dom else "absent")
+        record("saved research rendered", "knowledge-modules" in dom, "found" if "knowledge-modules" in dom else "absent")
         record("model name absent from the rendered page", "minimax" not in dom.lower(),
                "no leak" if "minimax" not in dom.lower() else "MODEL NAME LEAKED INTO THE PAGE")
     except subprocess.TimeoutExpired:

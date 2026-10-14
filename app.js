@@ -1,7 +1,6 @@
-/* ArcDossier v0.3 — front-end.
-   Everything shown here comes from the ArcDossier service: live Arc RPC reads and
-   server-side source probes. Nothing is seeded, and every claim can be opened
-   up to the receipt behind it. */
+/* ArcDossier v0.5 — front-end.
+   Results combine saved, source-linked Arc research with live Arc RPC reads,
+   market APIs, and server-side source probes. */
 
 const ACTIVITY_KEY = "arcdossier.activity.v3";
 const AI_EFFORTS = ["low", "medium", "high", "xhigh", "max"];
@@ -104,6 +103,25 @@ function fmtValue(key, value) {
   if (Array.isArray(value)) return value.length ? value.join(", ") : "none found";
   if (typeof value === "boolean") return value ? "yes" : "no";
   return String(value);
+}
+
+function formatUsd(value) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  if (Math.abs(value) < 0.01) return "$" + value.toLocaleString("en-US", { maximumSignificantDigits: 5 });
+  return "$" + value.toLocaleString("en-US", { maximumFractionDigits: 2 });
+}
+
+function formatPercent(value) {
+  return typeof value === "number" && Number.isFinite(value) ? value.toFixed(2) + "%" : "—";
+}
+
+function safeHttpUrl(value) {
+  try {
+    const parsed = new URL(String(value || ""));
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "";
+  } catch {
+    return "";
+  }
 }
 
 function loadActivity() {
@@ -803,6 +821,113 @@ async function runAnalysis() {
   }
 }
 
+function knowledgeLink(label, href) {
+  const safe = safeHttpUrl(href);
+  return safe ? `<a href="${escapeHtml(safe)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)} ↗</a>` : "";
+}
+
+function renderKnowledgeCandidates(result, query) {
+  const candidates = result.candidates || [];
+  const container = $("#search-result");
+  container.innerHTML = `<article class="result-card result-unverified">
+    <div class="result-heading"><div><span class="result-status">Identity check</span>
+      <h3>More than one project matches “${escapeHtml(query)}”</h3>
+      <p>Select the contract address instead of merging projects that share a name or symbol.</p></div></div>
+    <div class="knowledge-candidates">${candidates.map((item) => `
+      <button type="button" class="knowledge-candidate" data-knowledge-ca="${escapeHtml(item.contractAddress || "")}">
+        <span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.symbol || "")}</small></span>
+        <code>${escapeHtml(item.contractAddress || "No token contract")}</code>
+      </button>`).join("")}</div>
+  </article>`;
+  container.querySelectorAll("[data-knowledge-ca]").forEach((button) => {
+    button.addEventListener("click", () => runSearch(button.dataset.knowledgeCa, { count: true }));
+  });
+}
+
+function renderKnowledgeResult(result, query) {
+  const profile = result.match;
+  const container = $("#search-result");
+  const token = (profile.tokens || [])[0] || {};
+  const website = knowledgeLink("Official website", profile.website);
+  const handle = String(profile.xHandle || "").replace(/^@/, "");
+  const social = handle ? knowledgeLink("X · @" + handle, "https://x.com/" + handle) : "";
+  const modules = Object.entries(profile.modules || {});
+  const links = [website, social].filter(Boolean).join("");
+  const sources = (profile.sources || []).map((source, index) => {
+    const href = safeHttpUrl(source.url);
+    return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">Source ${index + 1} ↗</a>` : "";
+  }).filter(Boolean);
+
+  container.innerHTML = `<article class="result-card result-verified knowledge-result">
+    <div class="result-heading">
+      <div><span class="result-status">Saved Arc research · ${escapeHtml(profile.researchDate || "date unavailable")}</span>
+        <h3>${escapeHtml(profile.name)}${profile.symbol ? ` <small>${escapeHtml(profile.symbol)}</small>` : ""}</h3>
+        ${profile.summaryEn ? `<p>${escapeHtml(profile.summaryEn)}</p>` : profile.summaryZh ? `<p>${escapeHtml(profile.summaryZh)}</p>` : ""}
+      </div>
+      <div class="knowledge-speed"><strong>${escapeHtml(String(result.latencyMs || 0))} ms</strong><span>local match</span></div>
+    </div>
+
+    <section class="knowledge-section">
+      <div class="metrics-head"><h3>Project overview</h3><p>Identity matched before any external research call.</p></div>
+      <div class="knowledge-identity">
+        ${profile.category ? `<span><small>Category</small><strong>${escapeHtml(profile.category)}</strong></span>` : ""}
+        ${token.contract_address ? `<span><small>Arc contract · chain 5042</small><code>${escapeHtml(token.contract_address)}</code></span>` : ""}
+        ${links ? `<span class="knowledge-links"><small>Official surfaces</small>${links}</span>` : ""}
+      </div>
+    </section>
+
+    <section class="knowledge-section" id="knowledge-market">
+      <div class="metrics-head"><h3>Market data</h3><p>Loading the latest market data independently…</p></div>
+      <div class="market-loading">Research is already available while the market request runs.</div>
+    </section>
+
+    ${modules.length ? `<section class="knowledge-section">
+      <div class="metrics-head"><h3>Saved research</h3><p>Imported from the v0.5 research package. Unverified fields remain unverified.</p></div>
+      <div class="knowledge-modules">${modules.map(([name, value]) => `<article>
+        <span>${escapeHtml(name.replace(/^\d+_?/, "").replaceAll("_", " "))}</span>
+        <p>${escapeHtml(value)}</p>
+      </article>`).join("")}</div>
+    </section>` : ""}
+
+    ${(profile.risks || []).length ? `<section class="knowledge-section">
+      <div class="metrics-head"><h3>Risks to review</h3><p>Research flags, not buy or sell recommendations.</p></div>
+      <ul class="knowledge-risks">${profile.risks.map((risk) => `<li>${escapeHtml(risk)}</li>`).join("")}</ul>
+    </section>` : ""}
+
+    ${sources.length ? `<details class="knowledge-sources"><summary>Research sources · ${sources.length}</summary><div>${sources.join("")}</div></details>` : ""}
+    <div class="result-foot"><span>FOUND AS</span><code>${escapeHtml(query)}</code><button class="button button-ghost" id="recheck" type="button">Refresh data</button></div>
+  </article>`;
+
+  const recheck = $("#recheck");
+  if (recheck) recheck.addEventListener("click", () => runSearch(query, { count: false, fresh: true }));
+  container.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderKnowledgeMarket(payload) {
+  const section = $("#knowledge-market");
+  if (!section) return;
+  const tokens = payload.tokens || [];
+  const market = tokens.find((item) => item.status !== "unavailable") || tokens[0];
+  if (!market || market.status === "unavailable") {
+    section.innerHTML = `<div class="metrics-head"><h3>Market data</h3><span class="market-status is-unavailable">Unavailable</span></div>
+      <p class="market-empty">No reliable market quote was returned. The saved project research remains available above.</p>`;
+    return;
+  }
+  const status = market.status || payload.status || "unavailable";
+  const cells = [
+    ["Price", formatUsd(market.priceUsd)], ["Market cap", formatUsd(market.marketCapUsd)],
+    ["FDV", formatUsd(market.fdvUsd)], ["Volume · 24h", formatUsd(market.volume24hUsd)],
+    ["Liquidity", formatUsd(market.liquidityUsd)], ["Transactions · 24h", fmtInt(market.txns24h)],
+    ["Change · 1h", formatPercent(market.priceChange1hPct)], ["Change · 6h", formatPercent(market.priceChange6hPct)],
+    ["Change · 24h", formatPercent(market.priceChange24hPct)],
+  ].filter(([, value]) => value !== "—");
+  const pairLink = knowledgeLink("Open primary pool", market.pairUrl);
+  section.innerHTML = `<div class="metrics-head"><div><h3>Market data</h3><p>${escapeHtml(market.dataSource || "Market API")} · ${escapeHtml(market.updatedAt || "time unavailable")}</p></div>
+      <span class="market-status is-${escapeHtml(status)}">${escapeHtml(status)}</span></div>
+    ${cells.length ? `<div class="erc20-grid metric-cells">${cells.map(([label, value]) => `<div class="erc20-cell"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join("")}</div>` : ""}
+    ${(market.pairAddress || pairLink) ? `<div class="market-pair">${market.pairAddress ? `<code>${escapeHtml(market.pairAddress)}</code>` : ""}${pairLink}</div>` : ""}`;
+}
+
 function renderResult(dossier) {
   const container = $("#search-result");
   const hardGate = dossier.status === "not-arc";
@@ -871,6 +996,37 @@ async function runSearch(query, options) {
   $("#search-result").innerHTML = `<div class="empty-state"><strong>Running the checks…</strong><p>Fetching published sources and reading the Arc chain.</p></div>`;
 
   try {
+    const knowledgePayload = await api("/api/knowledge?q=" + encodeURIComponent(cleanQuery));
+    const resolved = knowledgePayload.ok ? knowledgePayload.data : null;
+    if (resolved && resolved.match) {
+      renderKnowledgeResult(resolved, cleanQuery);
+      if (settings.count !== false) recordSearch({
+        query: cleanQuery, title: resolved.match.name, status: "saved", sources: [],
+      });
+      try {
+        const shareable = new URL(window.location.href);
+        shareable.searchParams.set("q", cleanQuery);
+        shareable.searchParams.delete("mode");
+        window.history.replaceState(null, "", shareable);
+      } catch { /* history is unavailable in some embedding contexts */ }
+      setSearchStatus("Saved research loaded. Refreshing current market data…", "loading");
+      try {
+        const marketPayload = await api("/api/market?project_id=" + encodeURIComponent(resolved.match.projectId) +
+          (settings.fresh ? "&fresh=1" : ""));
+        if (marketPayload.ok) renderKnowledgeMarket(marketPayload.data);
+        else renderKnowledgeMarket({ status: "unavailable", tokens: [] });
+      } catch {
+        renderKnowledgeMarket({ status: "unavailable", tokens: [] });
+      }
+      setSearchStatus("");
+      return;
+    }
+    if (resolved && (resolved.candidates || []).length > 1) {
+      renderKnowledgeCandidates(resolved, cleanQuery);
+      setSearchStatus("");
+      return;
+    }
+
     const payload = await api("/api/dossier", {
       method: "POST",
       headers: { "content-type": "application/json" },
