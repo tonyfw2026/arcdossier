@@ -67,7 +67,8 @@ instead of silently choosing one project. Market data is fetched separately by c
 cached for five minutes, and never overwrites the saved research.
 
 The bundled v0.5 package currently contains 28 research entities, 27 Arc token contracts,
-and 52 cited sources. Import it idempotently with:
+and 52 cited sources. All public summaries, seven-module research, and risk notes are
+stored in English, so known-project searches do not need runtime translation. Import it idempotently with:
 
 ```bash
 python3 import_research_package.py

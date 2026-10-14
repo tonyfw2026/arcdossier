@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import json
 import os
+import re
 import tempfile
 import unittest
 
@@ -23,6 +25,20 @@ class KnowledgeBaseTest(unittest.TestCase):
     def test_import_is_complete_and_idempotent(self):
         self.assertEqual(self.kb.stats()["projects"], 28)
         self.assertEqual(self.kb.stats()["tokens"], 27)
+
+    def test_all_public_research_is_english(self):
+        with open(os.path.join(PACKAGE, "arc_projects.json"), encoding="utf-8") as handle:
+            projects = json.load(handle)["projects"]
+        self.assertEqual(len(projects), 28)
+        for project in projects:
+            public_research = {
+                "summary": project.get("summary_en"),
+                "modules": project.get("seven_modules"),
+                "risks": project.get("risks"),
+            }
+            self.assertEqual(len(public_research["modules"] or {}), 7, project["project_id"])
+            self.assertIsNone(re.search(r"[\u3400-\u9fff]", json.dumps(public_research, ensure_ascii=False)),
+                              project["project_id"])
         self.kb.import_package(PACKAGE)
         self.assertEqual(self.kb.stats()["projects"], 28)
         self.assertEqual(self.kb.stats()["tokens"], 27)
